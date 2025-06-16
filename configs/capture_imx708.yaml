@@ -1,4 +1,4 @@
-sensor: arducam_708
+sensor: IMX708
 bayer: True
 fn: test
 exp: 0.02
