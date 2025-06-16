@@ -11,7 +11,7 @@ rgb: False
 gray: False
 iso: 100
 sixteen: True   # whether 16 bits or 8 (from Bayer data)
-legacy: True    
+legacy: False    
 down: null
 res: null
 nbits_out: 8

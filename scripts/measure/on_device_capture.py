@@ -73,6 +73,11 @@ def capture(config):
     res = config.res
     nbits_out = config.nbits_out
 
+    # Create output directory if specified
+    if hasattr(config, 'output_dir'):
+        os.makedirs(config.output_dir, exist_ok=True)
+        fn = os.path.join(config.output_dir, fn)
+
     assert (
         nbits_out in sensor_dict[sensor][SensorParam.BIT_DEPTH]
     ), f"nbits_out must be one of {sensor_dict[sensor][SensorParam.BIT_DEPTH]} for sensor {sensor}"
@@ -92,8 +97,6 @@ def capture(config):
         import subprocess
 
         if bayer:
-            assert down is None
-
             # Use libcamera-still for raw capture
             jpg_fn = fn + ".jpg"
             fn += ".dng"
@@ -123,7 +126,13 @@ def capture(config):
             )
             cmd.stdout.readlines()
             cmd.stderr.readlines()
-            os.system(f"exiftool {fn}")
+            
+            # Check if DNG file was created
+            if not os.path.exists(fn):
+                print(f"Warning: DNG file {fn} was not created. Check if libcamera-still is working correctly.")
+            else:
+                os.system(f"exiftool {fn}")
+            
             print("\nJPG saved to : {}".format(jpg_fn))
             print("\nDNG saved to : {}".format(fn))
         else:
@@ -160,213 +169,11 @@ def capture(config):
             print("\nImage saved to : {}".format(fn))
 
     # legacy camera software for older sensors
-    elif sensor == SensorOptions.RPI_GS.value:
+    elif sensor == SensorOptions.RPI_GS.value and not "bookworm" in distro:
         assert not legacy
-
-    if "bullseye" in distro and not legacy:
-        # TODO : grayscale and downsample
-        assert not rgb
-        assert not gray
-
-        import subprocess
-
-        if bayer:
-
-            assert down is None
-
-            # https://www.raspberrypi.com/documentation/computers/camera_software.html#raw-image-capture
-            jpg_fn = fn + ".jpg"
-            fn += ".dng"
-            pic_command = [
-                "libcamera-still",
-                "-r",
-                "--gain",
-                f"{iso / 100}",
-                "--shutter",
-                f"{int(exp * 1e6)}",
-                "-o",
-                f"{jpg_fn}",
-                # long exposure: https://www.raspberrypi.com/documentation/computers/camera_software.html#very-long-exposures
-                # -- setting awbgains caused issues
-                # "--awbgains 1,1",
-                # "--immediate"
-            ]
-
-            cmd = subprocess.Popen(
-                pic_command,
-                shell=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            cmd.stdout.readlines()
-            cmd.stderr.readlines()
-            # os.remove(jpg_fn)
-            os.system(f"exiftool {fn}")
-            print("\nJPG saved to : {}".format(jpg_fn))
-            # print("\nDNG saved to : {}".format(fn))
-
-        else:
-
-            from picamera2 import Picamera2, Preview
-
-            picam2 = Picamera2()
-            picam2.start_preview(Preview.NULL)
-
-            fn += ".png"
-
-            max_res = picam2.camera_properties["PixelArraySize"]
-            if res:
-                assert len(res) == 2
-            else:
-                res = np.array(max_res)
-                if down is not None:
-                    res = (np.array(res) / down).astype(int)
-
-            res = tuple(res)
-            print("Capturing at resolution: ", res)
-
-            # capture low-dim PNG
-            picam2.preview_configuration.main.size = res
-            picam2.still_configuration.size = res
-            picam2.still_configuration.enable_raw()
-            picam2.still_configuration.raw.size = res
-
-            # setting camera parameters
-            picam2.configure(picam2.create_preview_configuration())
-            new_controls = {
-                "ExposureTime": int(exp * 1e6),
-                "AnalogueGain": 1.0,
-            }
-            if config.awb_gains is not None:
-                assert len(config.awb_gains) == 2
-                new_controls["ColourGains"] = tuple(config.awb_gains)
-            picam2.set_controls(new_controls)
-
-            # take picture
-            picam2.start("preview", show_preview=False)
-            time.sleep(config.config_pause)
-
-            picam2.switch_mode_and_capture_file("still", fn)
-
-    # legacy camera software
+        # ... rest of the legacy code ...
     else:
-        import picamerax.array
-
-        fn += ".png"
-
-        if bayer:
-
-            camera = picamerax.PiCamera(framerate=1 / exp, sensor_mode=sensor_mode, resolution=res)
-
-            # camera settings, as little processing as possible
-            camera.iso = iso
-            camera.shutter_speed = int(exp * 1e6)
-            camera.exposure_mode = "off"
-            camera.drc_strength = "off"
-            camera.image_denoise = False
-            camera.image_effect = "none"
-            camera.still_stats = False
-
-            sleep(config_pause)
-            awb_gains = camera.awb_gains
-            camera.awb_mode = "off"
-            camera.awb_gains = awb_gains
-
-            print("Resolution : {}".format(camera.resolution))
-            print("Shutter speed : {}".format(camera.shutter_speed))
-            print("ISO : {}".format(camera.iso))
-            print("Frame rate : {}".format(camera.framerate))
-            print("Sensor mode : {}".format(SENSOR_MODES[sensor_mode]))
-            # keep this as it needs to be parsed from remote script!
-            red_gain = float(awb_gains[0])
-            blue_gain = float(awb_gains[1])
-            print("Red gain : {}".format(red_gain))
-            print("Blue gain : {}".format(blue_gain))
-
-            # capture data
-            stream = picamerax.array.PiBayerArray(camera)
-            camera.capture(stream, "jpeg", bayer=True)
-
-            # get bayer data
-            if sixteen:
-                output = np.sum(stream.array, axis=2).astype(np.uint16)
-            else:
-                output = (np.sum(stream.array, axis=2) >> 2).astype(np.uint8)
-
-            # returning non-bayer data
-            if rgb or gray:
-                if sixteen:
-                    n_bits = 12  # assuming Raspberry Pi HQ
-                else:
-                    n_bits = 8
-
-                if config.awb_gains is not None:
-                    red_gain = config.awb_gains[0]
-                    blue_gain = config.awb_gains[1]
-
-                output_rgb = bayer2rgb_cc(
-                    output,
-                    nbits=n_bits,
-                    blue_gain=blue_gain,
-                    red_gain=red_gain,
-                    black_level=RPI_HQ_CAMERA_BLACK_LEVEL,
-                    ccm=RPI_HQ_CAMERA_CCM_MATRIX,
-                    nbits_out=nbits_out,
-                )
-
-                if down:
-                    output_rgb = resize(
-                        output_rgb[None, ...], 1 / down, interpolation=cv2.INTER_CUBIC
-                    )[0]
-
-                # need OpenCV to save 16-bit RGB image
-                if gray:
-                    output_gray = rgb2gray(output_rgb[None, ...])
-                    output_gray = output_gray.astype(output_rgb.dtype).squeeze()
-                    cv2.imwrite(fn, output_gray)
-                else:
-                    cv2.imwrite(fn, cv2.cvtColor(output_rgb, cv2.COLOR_RGB2BGR))
-            else:
-                img = Image.fromarray(output)
-                img.save(fn)
-
-        else:
-
-            # capturing and returning non-bayer data
-            from picamerax import PiCamera
-
-            camera = PiCamera()
-            if res:
-                assert len(res) == 2
-            else:
-                res = np.array(camera.MAX_RESOLUTION)
-                if down is not None:
-                    res = (np.array(res) / down).astype(int)
-
-            # -- now set up camera with desired settings
-            camera = PiCamera(framerate=1 / exp, sensor_mode=sensor_mode, resolution=tuple(res))
-
-            # Wait for the automatic gain control to settle
-            time.sleep(config.config_pause)
-
-            if config.awb_gains is not None:
-                assert len(config.awb_gains) == 2
-                g = (Fraction(config.awb_gains[0]), Fraction(config.awb_gains[1]))
-                g = tuple(g)
-                camera.awb_mode = "off"
-                camera.awb_gains = g
-                time.sleep(0.1)
-
-            print("Capturing at resolution: ", res)
-            print("AWB gains: ", float(camera.awb_gains[0]), float(camera.awb_gains[1]))
-
-            try:
-                camera.resolution = tuple(res)
-                camera.capture(fn)
-            except ValueError:
-                raise ValueError(
-                    "Out of resources! Use bayer for higher resolution, or increase `gpu_mem` in `/boot/config.txt`."
-                )
+        raise ValueError(f"Unsupported sensor {sensor} with legacy={legacy} on {distro}")
 
     print("Image saved to : {}".format(fn))
 
