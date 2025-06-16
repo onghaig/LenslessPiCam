@@ -39,6 +39,7 @@ class SensorOptions(Enum):
     * ``rpi_v2``: `Raspberry Pi Camera Module V2 Sensor (IMX 219) <https://www.raspberrypi.com/products/camera-module-v2/>`_
     * ``basler_287``: `Basler daA720-520um Sensor (IMX 287) <https://www.baslerweb.com/en/products/cameras/area-scan-cameras/dart/daa720-520um-cs-mount/>`_
     * ``basler_548``: `Basler daA2448-70uc Sensor (IMX 548) <https://www.baslerweb.com/en/products/cameras/area-scan-cameras/dart/daa2448-70uc-cs-mount/>`_
+    * ``arducam_708``: `Arducam 12MP IMX708 Camera Sensor <https://www.arducam.com/product/arducam-12mp-imx708-camera-module-for-raspberry-pi/>`_
     """
 
     RPI_HQ = "rpi_hq"
@@ -46,6 +47,7 @@ class SensorOptions(Enum):
     RPI_V2 = "rpi_v2"
     BASLER_287 = "basler_287"
     BASLER_548 = "basler_548"
+    ARDUCAM_708 = "arducam_708"
 
     @staticmethod
     def values():
@@ -125,6 +127,17 @@ sensor_dict = {
         SensorParam.DIAGONAL: 8.8e-3,
         SensorParam.COLOR: True,
         SensorParam.BIT_DEPTH: [8, 10, 12],
+    },
+    # Arducam 12MP IMX708 Camera
+    # datasheet: https://www.arducam.com/product/arducam-12mp-imx708-camera-module-for-raspberry-pi/
+    SensorOptions.ARDUCAM_708.value: {
+        SensorParam.PIXEL_SIZE: np.array([1.4e-6, 1.4e-6]),
+        SensorParam.RESOLUTION: np.array([3456, 4608]),
+        SensorParam.DIAGONAL: 7.0e-3,
+        SensorParam.COLOR: True,
+        SensorParam.BIT_DEPTH: [8, 10],
+        SensorParam.MAX_EXPOSURE: 1000.0,
+        SensorParam.MIN_EXPOSURE: 0.02,
     },
 }
 

@@ -200,8 +200,13 @@ directory):
 .. code:: bash
 
    # dependencies
+   sudo apt-get update
    sudo apt-get install -y libimage-exiftool-perl libatlas-base-dev \
-   python3-numpy python3-scipy python3-opencv
+   python3-numpy python3-scipy python3-opencv libcamera-tools
+
+   # For Raspberry Pi 5 and IMX708 camera
+   sudo apt-get install -y python3-picamera2
+
    sudo pip3 install -U virtualenv
 
    # download from GitHub
@@ -214,8 +219,16 @@ directory):
    pip install --no-deps -e .
    pip install -r rpi_requirements.txt
 
+   # Enable camera interface
+   sudo raspi-config nonint do_camera 0
+
+   # For IMX708 camera on Raspberry Pi 5
+   # Add to /boot/config.txt:
+   # dtoverlay=imx708
+   # camera_auto_detect=0
+
    # test on-device camera capture (after setting up the camera)
-   (lensless_env) python scripts/measure/on_device_capture.py
+   (lensless_env) python scripts/measure/on_device_capture.py sensor=arducam_708 legacy=False
 
 You may still need to manually install ``numpy`` and/or ``scipy`` with ``pip`` in case libraries (e.g. ``libopenblas.so.0``) cannot be detected.
    

@@ -86,7 +86,81 @@ def capture(config):
     distro = get_distro()
     print("RPi distribution : {}".format(distro))
 
-    if sensor == SensorOptions.RPI_GS.value:
+    # Use libcamera for Raspberry Pi 5 and IMX708
+    if sensor == SensorOptions.ARDUCAM_708.value or "bookworm" in distro:
+        assert not legacy
+        import subprocess
+
+        if bayer:
+            assert down is None
+
+            # Use libcamera-still for raw capture
+            jpg_fn = fn + ".jpg"
+            fn += ".dng"
+            pic_command = [
+                "libcamera-still",
+                "-r",
+                "--gain",
+                f"{iso / 100}",
+                "--shutter",
+                f"{int(exp * 1e6)}",
+                "-o",
+                f"{jpg_fn}",
+            ]
+
+            # Add sensor-specific settings for IMX708
+            if sensor == SensorOptions.ARDUCAM_708.value:
+                pic_command.extend([
+                    "--sensor-mode", "0",  # Full resolution mode
+                    "--awb-mode", "off",
+                ])
+
+            cmd = subprocess.Popen(
+                pic_command,
+                shell=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            cmd.stdout.readlines()
+            cmd.stderr.readlines()
+            os.system(f"exiftool {fn}")
+            print("\nJPG saved to : {}".format(jpg_fn))
+            print("\nDNG saved to : {}".format(fn))
+        else:
+            # Use libcamera-still for processed capture
+            fn += ".jpg"
+            pic_command = [
+                "libcamera-still",
+                "--gain",
+                f"{iso / 100}",
+                "--shutter",
+                f"{int(exp * 1e6)}",
+                "-o",
+                f"{fn}",
+            ]
+
+            # Add sensor-specific settings for IMX708
+            if sensor == SensorOptions.ARDUCAM_708.value:
+                pic_command.extend([
+                    "--sensor-mode", "0",  # Full resolution mode
+                    "--awb-mode", "off",
+                ])
+
+            if down:
+                pic_command.extend(["--width", str(res[0]), "--height", str(res[1])])
+
+            cmd = subprocess.Popen(
+                pic_command,
+                shell=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            cmd.stdout.readlines()
+            cmd.stderr.readlines()
+            print("\nImage saved to : {}".format(fn))
+
+    # legacy camera software for older sensors
+    elif sensor == SensorOptions.RPI_GS.value:
         assert not legacy
 
     if "bullseye" in distro and not legacy:
