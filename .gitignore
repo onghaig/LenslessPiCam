@@ -1,4 +1,3 @@
 #.gitignore
 RecordedData/
-.vscode/
-*.dng/
+*.dng
