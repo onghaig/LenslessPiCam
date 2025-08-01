@@ -1,0 +1,47 @@
+# python scripts/sim/digicam_psf.py
+hydra:
+  job:
+    chdir: True    # change to output folder
+
+use_torch: True
+dtype: float32
+torch_device: cuda:1
+requires_grad: False
+
+# if repo not provided, check for local file at `digicam.pattern`
+huggingface_repo: bezzam/DigiCam-CelebA-26K
+huggingface_mask_pattern: mask_pattern.npy
+huggingface_psf: psf_measured.png
+
+digicam:
+
+  slm: adafruit
+  sensor: rpi_hq
+  downsample: 1
+
+  # https://drive.switch.ch/index.php/s/NdgHlcDeHVDH5ww?path=%2Fpsf
+  pattern: data/psf/adafruit_random_pattern_20230719.npy
+  ap_center: [59, 76]
+  ap_shape: [19, 26]
+  rotate: -0.8   # rotation in degrees
+  vertical_shift: -20 # [px]
+  horizontal_shift: -100  # [px]
+
+  # optionally provide measured PSF for side-by-side comparison
+  # https://drive.switch.ch/index.php/s/NdgHlcDeHVDH5ww?path=%2Fpsf
+  psf: data/psf/adafruit_random_2mm_20231907.png
+  gamma: 2    # for plotting measured
+
+sim:
+
+  # whether SLM is flipped
+  flipud: True
+
+  # in practice found waveprop=True or False doesn't make difference
+  waveprop: True
+  deadspace: True
+
+  # below are ignored if waveprop=False
+  scene2mask: 0.3   # [m]
+  mask2sensor: 0.002   # [m]
+  

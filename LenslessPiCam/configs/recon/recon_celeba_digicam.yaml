@@ -1,0 +1,37 @@
+# python scripts/recon/dataset.py -cn recon_celeba_digicam
+defaults:
+  - recon_dataset
+  - _self_
+
+
+dataset: bezzam/DigiCam-CelebA-10K
+psf_fn: psf_measured.png   # "psf_simulated.png" or "psf_measured.png "
+split: test   # "train", "test", "all"
+downsample: 2
+rotate: True   # if measurement is upside-down
+
+alignment:
+  # cropping when there is no downsampling
+  crop:
+    vertical: [0, 525]
+    horizontal: [265, 695]
+
+  # for prepping ground truth data
+  simulation:
+    scene2mask: 0.25   # [m]
+    mask2sensor: 0.002   # [m]
+    object_height: 0.33   # [m]
+    sensor: "rpi_hq"
+    snr_db: null
+    downsample: null
+    random_vflip: False
+    random_hflip: False
+    quantize: False
+    # shifting when there is no files.downsample
+    vertical_shift: -117
+    horizontal_shift: -25
+
+algo: admm   # "admm", "apgd", "null" to just copy over (resized) raw data
+admm:
+  n_iter: 10
+
