@@ -1,0 +1,14 @@
+[2025-07-21 14:45:22,501][picamera2.picamera2][INFO] - Initialization successful.
+[2025-07-21 14:45:22,502][picamera2.picamera2][INFO] - Camera now open.
+[2025-07-21 14:45:22,505][picamera2.picamera2][INFO] - Camera configuration has been adjusted!
+[2025-07-21 14:45:22,505][picamera2.picamera2][INFO] - Configuration successful!
+[2025-07-21 14:45:22,590][picamera2.picamera2][INFO] - Camera started
+[2025-07-21 14:45:24,594][picamera2.picamera2][INFO] - Camera stopped
+[2025-07-21 14:45:24,595][picamera2.picamera2][INFO] - Camera configuration has been adjusted!
+[2025-07-21 14:45:24,604][picamera2.picamera2][INFO] - Configuration successful!
+[2025-07-21 14:45:24,661][picamera2.picamera2][INFO] - Camera started
+[2025-07-21 14:45:25,120][picamera2.picamera2][INFO] - Camera stopped
+[2025-07-21 14:45:25,127][picamera2.picamera2][INFO] - Configuration successful!
+[2025-07-21 14:45:25,227][picamera2.picamera2][INFO] - Camera started
+[2025-07-21 14:45:25,342][picamera2.picamera2][INFO] - Camera stopped
+[2025-07-21 14:45:25,747][picamera2.picamera2][INFO] - Camera closed successfully.

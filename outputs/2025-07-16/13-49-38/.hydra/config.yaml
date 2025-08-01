@@ -1,0 +1,18 @@
+sensor: ardu_708
+bayer: false
+fn: data/psf/grayscale
+exp: 0.09
+config_pause: 2
+sensor_mode: '0'
+rgb: false
+gray: true
+greenscale: false
+iso: 100
+sixteen: true
+legacy: false
+down: null
+res: null
+nbits_out: 10
+awb_gains:
+- 1
+- 1
