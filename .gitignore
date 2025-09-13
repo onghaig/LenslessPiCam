@@ -2,3 +2,6 @@
 RecordedData/
 *.dng
 outputs/
+*.npy
+*.jpg
+*.png

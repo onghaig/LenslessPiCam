@@ -1,7 +1,7 @@
 sensor: ardu_708
 bayer: False
-fn: data/psf/temporarytest
-exp: 0.01
+fn: /home/user/OriginalLenslessPiCam/LenslessPiCam/data/ResearchDataPolarization/9-5-2025/psfgreenscaleledwithbandpassfilter
+exp: 0.10
 config_pause: 2
 # {'off': 0, 'auto': 1, 'sunlight': 2, 'cloudy': 3,
 # 'shade': 4, 'tungsten': 5, 'fluorescent': 6, 
